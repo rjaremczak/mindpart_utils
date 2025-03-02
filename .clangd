@@ -1,0 +1,7 @@
+InlayHints:
+  Enabled: Yes
+  ParameterNames: No
+  DeducedTypes: No
+CompileFlags:
+  Add: [ -xc , -std=c23]
+  Compiler: /usr/bin/clang
