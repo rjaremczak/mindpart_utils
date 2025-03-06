@@ -2,7 +2,7 @@ SRC_DIR = src
 OUT_DIR = build
 
 CC = clang
-CCOPTS = -o3 -Wall -std=c23
+CCOPTS = -o3 -Wall
 
 SRC_FILES = $(wildcard $(SRC_DIR)/*.c)
 

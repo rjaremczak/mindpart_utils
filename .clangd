@@ -3,5 +3,5 @@ InlayHints:
   ParameterNames: No
   DeducedTypes: No
 CompileFlags:
-  Add: [ -xc, -std=c23 ]
+  Add: [ -xc ]
   Compiler: /usr/bin/clang
