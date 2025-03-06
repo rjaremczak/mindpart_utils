@@ -5,10 +5,6 @@
 #include <termios.h>
 #include <unistd.h>
 
-#ifndef CRTSCTS
-#define CRTSCTS 020000000000 /* flow control */
-#endif
-
 int set_interface_attribs(int fd, int speed) {
     struct termios tty;
 
