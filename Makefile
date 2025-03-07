@@ -14,15 +14,19 @@ rebuild: clean all
 all: baseconv binup
 
 baseconv: $(SRC_DIR)/baseconv.c
-	$(CC) $(CCOPTS) -o $(OUT_DIR)/$@ $<
+	$(CC) $(CCOPTS) -c -o $(OUT_DIR)/$@ $<
 
 binup: $(SRC_DIR)/binup.c
 	$(CC) $(CCOPTS) -o $(OUT_DIR)/$@ $<
 
-test: $(TEST_SRCS:$(TEST_SRC_DIR)/%.cpp=$(OUT_DIR)/%)
+crc16_test: $(TEST_SRC_DIR)/crc16_test.cpp $(SRC_DIR)/crc16.c
+	$(CP) $(CCOPTS) -o $(OUT_DIR)/$@ -I$(SRC_DIR) -xc++ $(TEST_SRC_DIR)/crc16_test.cpp -xc $(SRC_DIR)/crc16.c
 
 $(OUT_DIR)/%: $(TEST_SRC_DIR)/%.cpp
 	$(CP) $(CCOPTS) -o $@ $<
+
+$(OUT_DIR)/%.o: $(SRC_DIR)/%.c
+	$(CC) $(CCOPTS) -c -o $@ $<
 
 clean:
 	rm -rf $(OUT_DIR)/*

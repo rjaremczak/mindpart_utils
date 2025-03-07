@@ -2,9 +2,14 @@
 #include "doctest.h"
 
 extern "C" {
-    # include "../src/crc16.h"
+    # include "crc16.h"
 }
 
 TEST_CASE("crc16") {
-    CHECK_EQ(0,0);
+    struct crc16_calc calc;
+    crc16_init(&calc);
+    crc16_byte(&calc, 0x2a);
+    crc16_byte(&calc, 0xa2);
+    crc16_byte(&calc, 0xaf);
+    CHECK_EQ(calc.crc, 0x7e1e);
 }

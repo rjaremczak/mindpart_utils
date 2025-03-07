@@ -11,4 +11,4 @@ inline static void crc16_init(struct crc16_calc* calc) {
     calc->crc = 0;
 }
 
-void crc16_calc(struct crc16_calc* calc, uint8_t byte);
+void crc16_byte(struct crc16_calc* calc, uint8_t byte);

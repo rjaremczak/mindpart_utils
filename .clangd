@@ -3,5 +3,5 @@ InlayHints:
   ParameterNames: No
   DeducedTypes: No
 CompileFlags:
-  Add: [ ]
+  Add: [ -I../src ]
   Compiler: /usr/bin/clang
