@@ -17,8 +17,8 @@ all: baseconv binup
 baseconv: $(SRC_DIR)/baseconv.c
 	$(CC) $(CCOPTS) -c -o $(OUT_DIR)/$@ $<
 
-binup: $(SRC_DIR)/binup.c
-	$(CC) $(CCOPTS) -o $(OUT_DIR)/$@ $<
+binup: $(SRC_DIR)/binup.c $(SRC_DIR)/crc16.c
+	$(CC) $(CCOPTS) -o $(OUT_DIR)/$@ $^
 
 tests: $(TEST_EXECS)
 
