@@ -7,7 +7,8 @@ CP = clang++
 CCOPTS = -o3 -Wall
 
 SRCS = $(wildcard $(SRC_DIR)/*.c)
-TEST_SRCS = $(wildcard $(TEST_SRC_DIR)/*.cpp)
+TEST_SRCS = $(wildcard $(TEST_SRC_DIR)/*_test.cpp)
+TEST_EXECS = $(TEST_SRCS:$(TEST_SRC_DIR)/%_test.cpp=$(OUT_DIR)/%_test)
 
 rebuild: clean all
 
@@ -19,14 +20,10 @@ baseconv: $(SRC_DIR)/baseconv.c
 binup: $(SRC_DIR)/binup.c
 	$(CC) $(CCOPTS) -o $(OUT_DIR)/$@ $<
 
-crc16_test: $(TEST_SRC_DIR)/crc16_test.cpp $(SRC_DIR)/crc16.c
-	$(CP) $(CCOPTS) -o $(OUT_DIR)/$@ -I$(SRC_DIR) -xc++ $(TEST_SRC_DIR)/crc16_test.cpp -xc $(SRC_DIR)/crc16.c
+tests: $(TEST_EXECS)
 
-$(OUT_DIR)/%: $(TEST_SRC_DIR)/%.cpp
-	$(CP) $(CCOPTS) -o $@ $<
-
-$(OUT_DIR)/%.o: $(SRC_DIR)/%.c
-	$(CC) $(CCOPTS) -c -o $@ $<
+$(OUT_DIR)/%_test: $(TEST_SRC_DIR)/%_test.cpp $(SRC_DIR)/%.c
+	$(CP) $(CCOPTS) -o $@ -I$(SRC_DIR) -xc++ $(word 1,$^) -xc $(word 2,$^)
 
 clean:
 	rm -rf $(OUT_DIR)/*
