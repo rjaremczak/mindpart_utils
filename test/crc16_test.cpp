@@ -6,7 +6,7 @@ extern "C" {
 }
 
 TEST_CASE("crc16") {
-    struct crc16_calc calc;
+    struct crc16_proc calc;
     crc16_init(&calc);
     crc16_byte(&calc, 0x2a);
     crc16_byte(&calc, 0xa2);

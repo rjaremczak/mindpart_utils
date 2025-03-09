@@ -12,6 +12,7 @@ AllowAllArgumentsOnNextLine: true
 AllowAllConstructorInitializersOnNextLine: true
 AllowAllParametersOfDeclarationOnNextLine: false
 AllowShortBlocksOnASingleLine: true
+AllowShortEnumsOnASingleLine: false
 AllowShortCaseLabelsOnASingleLine: false
 AllowShortFunctionsOnASingleLine: false
 AllowShortIfStatementsOnASingleLine: true  # To avoid conflict, set this "Never" and each "if statement" should include brace when coding

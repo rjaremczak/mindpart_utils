@@ -2,13 +2,13 @@
 
 #include <stdint.h>
 
-struct crc16_calc {
+struct crc16_proc {
     uint16_t crc;
     uint16_t temp;
-};
+} __attribute__((packed));
 
-inline static void crc16_init(struct crc16_calc* calc) {
+inline static void crc16_init(struct crc16_proc* calc) {
     calc->crc = 0;
 }
 
-void crc16_byte(struct crc16_calc* calc, uint8_t byte);
+void crc16_byte(struct crc16_proc* calc, uint8_t byte);

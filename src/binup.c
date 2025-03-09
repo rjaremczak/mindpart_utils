@@ -1,5 +1,7 @@
 #include <errno.h>
 #include <fcntl.h>
+#include <stddef.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <string.h>
 #include <sys/stat.h>
@@ -8,13 +10,33 @@
 
 #include "crc16.h"
 
-int set_interface_attribs(int fd, int speed) {
+struct bin_header {
+    uint8_t type_id;
+    uint16_t data_size;
+    uint16_t load_address;
+} __attribute__((packed));
+
+enum error_code {
+    NO_ERROR = 0,
+    OPEN_SRC_ERROR = -1,
+    OPEN_DST_ERROR = -2,
+    GET_ATTRIBS_ERROR = -3,
+    SET_ATTRIBS_ERROR = -4,
+    READ_ERROR = -10,
+    WRITE_ERROR = -11
+};
+
+static void close_fd(int fd) {
+    if(fd != -1) {
+        tcdrain(fd);
+        close(fd);
+    }
+}
+
+static enum error_code set_attribs_fd(int fd, int speed) {
     struct termios tty;
 
-    if(tcgetattr(fd, &tty) < 0) {
-        printf("Error from tcgetattr: %s\n", strerror(errno));
-        return -1;
-    }
+    if(tcgetattr(fd, &tty) != 0) return errno == ENOTTY ? NO_ERROR : GET_ATTRIBS_ERROR;
 
     cfsetospeed(&tty, (speed_t)speed);
     cfsetispeed(&tty, (speed_t)speed);
@@ -35,85 +57,89 @@ int set_interface_attribs(int fd, int speed) {
     tty.c_cc[VMIN] = 1;
     tty.c_cc[VTIME] = 1;
 
-    if(tcsetattr(fd, TCSANOW, &tty) != 0) {
-        printf("Error from tcsetattr: %s\n", strerror(errno));
-        return -1;
-    }
-    return 0;
+    if(tcsetattr(fd, TCSANOW, &tty) != 0) return errno == ENOTTY ? NO_ERROR : GET_ATTRIBS_ERROR;
+
+    return NO_ERROR;
 }
 
-void set_mincount(int fd, int mcount) {
-    struct termios tty;
-
-    if(tcgetattr(fd, &tty) < 0) {
-        printf("Error tcgetattr: %s\n", strerror(errno));
-        return;
+static enum error_code transfer_fd(int src_fd, int dst_fd, size_t len, struct crc16_proc* crc16) {
+    char data;
+    for(size_t i = 0; i < len; i++) {
+        if(read(src_fd, &data, 1) != 1) return READ_ERROR;
+        if(write(dst_fd, &data, 1) != 1) return WRITE_ERROR;
+        if(crc16) crc16_byte(crc16, data);
+        usleep(5000);
     }
-
-    tty.c_cc[VMIN] = mcount ? 1 : 0;
-    tty.c_cc[VTIME] = 5; /* half second timer */
-
-    if(tcsetattr(fd, TCSANOW, &tty) < 0) printf("Error tcsetattr: %s\n", strerror(errno));
+    printf("transferred: %ld\n", len);
+    return NO_ERROR;
 }
 
-static void file_error(const char* fname) {
-    printf("file %s error %s\n", fname, strerror(errno));
-}
-
-static void close_fd(int fd) {
-    if(fd != -1) {
-        tcdrain(fd);
-        close(fd);
+static enum error_code send_fd(const void* data, size_t len, int dst_fd, struct crc16_proc* crc16) {
+    for(size_t i = 0; i < len; i++) {
+        if(write(dst_fd, ((const char*)data) + i, 1) != 1) return -2;
+        if(crc16) crc16_byte(crc16, ((const char*)data)[i]);
+        usleep(5000);
     }
+    printf("sent: %ld\n", len);
+    return NO_ERROR;
 }
 
 int main(int argc, char* argv[]) {
     const char* src_fname = argv[1];
     const char* dst_fname = argv[2];
-    int exit_code = -1;
+    enum error_code error_code;
     int src_fd = -1;
     int dst_fd = -1;
 
-    src_fd = open(src_fname, O_RDONLY);
-    if(src_fd == -1) {
-        file_error(src_fname);
-        goto exit;
+    if((src_fd = open(src_fname, O_RDONLY)) == -1) {
+        error_code = OPEN_DST_ERROR;
+        goto error_exit;
     }
 
-    dst_fd = open(dst_fname, O_RDWR | O_NOCTTY | O_SYNC);
-    if(dst_fd == -1) {
-        file_error(dst_fname);
-        goto exit;
+    if((dst_fd = open(dst_fname, O_RDWR | O_NOCTTY | O_SYNC | O_CREAT | O_TRUNC, S_IRWXU)) == -1) {
+        error_code = OPEN_DST_ERROR;
+        goto error_exit;
     }
-
-    /*baudrate 115200, 8 bits, no parity, 1 stop bit */
-    set_interface_attribs(dst_fd, B115200);
-    //set_mincount(fd, 0);                /* set to pure timed read */
 
     struct stat src_stat;
     stat(src_fname, &src_stat);
 
-    char buf;
-    struct crc16_calc crc16;
+    if((error_code = set_attribs_fd(dst_fd, B115200)) != NO_ERROR) goto error_exit;
+
+    struct crc16_proc crc16;
     crc16_init(&crc16);
+    struct bin_header header = {.type_id = 0x01, .data_size = src_stat.st_size, .load_address = 0xE000};
 
-    for(long i = 0; i < src_stat.st_size; i++) {
-        if(read(src_fd, &buf, 1) != 1) {
-            file_error(src_fname);
-            goto exit;
-        }
-        if(write(dst_fd, &buf, 1) != 1) {
-            file_error(dst_fname);
-            goto exit;
-        }
-        crc16_byte(&crc16, buf);
-        usleep(5000);
+    if((error_code = send_fd(&header, sizeof(header), dst_fd, &crc16))) goto error_exit;
+    if((error_code = transfer_fd(src_fd, dst_fd, src_stat.st_size, &crc16)) != 0) goto error_exit;
+    if((error_code = send_fd(&crc16, sizeof(crc16.crc), dst_fd, NULL))) goto error_exit;
+    error_code = NO_ERROR;
+
+error_exit:
+    switch(error_code) {
+        case NO_ERROR:
+            printf("success, sent:%ld B (crc16=0x%04x)\n", src_stat.st_size, crc16.crc);
+            break;
+        case OPEN_SRC_ERROR:
+            printf("file %s opening error: %s\n", src_fname, strerror(errno));
+            break;
+        case OPEN_DST_ERROR:
+            printf("file %s opening error: %s\n", dst_fname, strerror(errno));
+            break;
+        case GET_ATTRIBS_ERROR:
+            printf("tcgetattr error: %s(%i)\n", strerror(errno), errno);
+            break;
+        case SET_ATTRIBS_ERROR:
+            printf("tcsetattr error: %s\n", strerror(errno));
+            break;
+        case READ_ERROR:
+            printf("read error: %s\n", strerror(errno));
+            break;
+        case WRITE_ERROR:
+            printf("write error: %s\n", strerror(errno));
+            break;
     }
-    printf("success, %ldB sent, crc16=0x%04X.\n", src_stat.st_size, crc16.crc);
-    exit_code = 0;
-
-exit:
     close_fd(src_fd);
     close_fd(dst_fd);
-    return exit_code;
+    return error_code;
 }
