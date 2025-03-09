@@ -10,9 +10,9 @@ SRCS = $(wildcard $(SRC_DIR)/*.c)
 TEST_SRCS = $(wildcard $(TEST_SRC_DIR)/*_test.cpp)
 TEST_EXECS = $(TEST_SRCS:$(TEST_SRC_DIR)/%_test.cpp=$(OUT_DIR)/%_test)
 
-rebuild: clean all
+default: baseconv binup
 
-all: baseconv binup
+rebuild: clean default
 
 baseconv: $(SRC_DIR)/baseconv.c
 	$(CC) $(CCOPTS) -c -o $(OUT_DIR)/$@ $<
