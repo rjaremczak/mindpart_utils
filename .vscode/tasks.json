@@ -1,15 +1,15 @@
 {
 	"version": "2.0.0",
 	"tasks": [
-        {
-            "label": "make default target",
-            "group": {
-                "kind": "build",
-                "isDefault": true
-            },
-            "type": "shell",
-            "command": "make",
-            "problemMatcher": []
-        }
-    ]
+		{
+			"label": "make default",
+			"group": {
+				"kind": "build",
+				"isDefault": true
+			},
+			"type": "shell",
+			"command": "make",
+			"problemMatcher": []
+		}
+	]
 }
