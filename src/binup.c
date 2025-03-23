@@ -111,9 +111,12 @@ int main(int argc, char* argv[]) {
     struct bin_header header = {.type_id = 0x01, .data_size = src_stat.st_size, .load_address = 0xE000};
 
     // if((error_code = send_fd(&header, sizeof(header), dst_fd, &crc16))) goto error_exit;
+    uint16_t written = 0;
     uint16_t size = src_stat.st_size;
     if((error_code = send_fd(&size, sizeof(size), dst_fd, &crc16))) goto error_exit;
+    written += sizeof(size);
     if((error_code = transfer_fd(src_fd, dst_fd, src_stat.st_size, &crc16)) != 0) goto error_exit;
+    written += src_stat.st_size;
     // if((error_code = send_fd(&crc16, sizeof(crc16.crc), dst_fd, NULL))) goto error_exit;
     error_code = NO_ERROR;
 
@@ -121,12 +124,9 @@ error_exit:
     close_fd(src_fd);
     close_fd(dst_fd);
 
-    struct stat dst_stat;
-    stat(dst_fname, &dst_stat);
-
     switch(error_code) {
         case NO_ERROR:
-            printf("success, %ld B written, crc16=0x%04x\n", dst_stat.st_size, crc16.crc);
+            printf("success, %u B written, crc16=0x%04x\n", written, crc16.crc);
             break;
         case OPEN_SRC_ERROR:
             printf("file %s opening error: %s\n", src_fname, strerror(errno));
