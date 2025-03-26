@@ -1,12 +1,12 @@
 #include "crc16.h"
 
-void crc16_byte(struct crc16_proc* calc, uint8_t byte) {
-    calc->temp = ((calc->crc >> 8) ^ byte) << 8;
+void crc16_update(struct crc16* crc, uint8_t byte) {
+    crc->tmp = ((crc->val >> 8) ^ byte) << 8;
     for(uint8_t i = 0; i < 8; i++) {
-        if(calc->temp & 0x8000)
-            calc->temp = (calc->temp << 1) ^ 0x1021;
+        if(crc->tmp & 0x8000)
+            crc->tmp = (crc->tmp << 1) ^ 0x1021;
         else
-            calc->temp = calc->temp << 1;
+            crc->tmp = crc->tmp << 1;
     }
-    calc->crc = calc->temp ^ (calc->crc << 8);
+    crc->val = crc->tmp ^ (crc->val << 8);
 }
