@@ -1,10 +1,11 @@
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 
 #define PRG_NAME "parsefon"
 
 FILE* input_file;
-void* file_buf = NULL;
+uint8_t* fbuf = NULL;
 
 int main(int argc, char* argv[]) {
     if(argc != 2) {
@@ -32,17 +33,25 @@ int main(int argc, char* argv[]) {
     printf("reading %ld B ...\n", fsize);
 
     fseek(input_file, 0, SEEK_SET);
-    file_buf = malloc(fsize + 1);
-    long rsize = fread(file_buf, 1, fsize, input_file);
+    fbuf = malloc(fsize + 1);
+    long rsize = fread(fbuf, 1, fsize, input_file);
     if(rsize != fsize) {
         printf("only %ld B read\n", rsize);
         goto end_program;
     }
 
+    long ne_ind = fbuf[0x3c] + (fbuf[0x3d] << 8);
+    if(fbuf[ne_ind] != 'N' || fbuf[ne_ind + 1] != 'E') {
+        printf("no NE header\n");
+        goto end_program;
+    }
+
+    printf("%c%c\n", fbuf[ne_ind], fbuf[ne_ind + 1]);
+
 end_program:
 
     fclose(input_file);
-    if(file_buf) free(file_buf);
+    if(fbuf) free(fbuf);
 
     return 0;
 }
