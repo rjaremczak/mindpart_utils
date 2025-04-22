@@ -16,7 +16,7 @@ all: baseconv binup parsefon $(TEST_EXECS)
 rebuild: clean default
 
 baseconv: $(SRC_DIR)/baseconv.c
-	$(CC) $(CCOPTS) -c -o $(OUT_DIR)/$@ $^
+	$(CC) $(CCOPTS) -o $(OUT_DIR)/$@ $^
 
 binup: $(SRC_DIR)/binup.c $(SRC_DIR)/crc16.c
 	$(CC) $(CCOPTS) -o $(OUT_DIR)/$@ $^
