@@ -1,0 +1,43 @@
+#pragma once
+
+#include "defs.h"
+
+struct fnt_header {
+    u16 version;
+    u32 size;
+    char copyright[60];
+    u16 type;
+    u16 points;
+    u16 vres;
+    u16 hres;
+    u16 ascent;
+    u16 internal_leading;
+    u16 external_leading;
+    u8 italic;
+    u8 underline;
+    u8 strikeout;
+    u16 weight;
+    u8 charset;
+    u16 pix_width;
+    u16 pix_height;
+    u8 pitch_and_family;
+    u16 avg_width;
+    u16 avg_height;
+    u8 first_char;
+    u8 last_char;
+    u8 def_char;
+    u8 break_char;
+    u16 width_bytes;
+    u32 devname_off;
+    u32 facename_off;
+    u32 bits_ptr;
+    u32 bits_off;
+    u8 reserved;
+    u32 flags;
+    u16 a_space;
+    u16 b_space;
+    u16 c_space;
+    u32 color_ptr;
+    u16 reserved_1;
+    u8 char_rable;
+} __attribute__((packed));
