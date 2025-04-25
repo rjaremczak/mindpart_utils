@@ -63,6 +63,7 @@ void parse_fnt(const u8* data, size_t size, FILE* outfile) {
                 u8 byte = data[off + b * fnt->pix_height + line];
                 fprintf(outfile, "%02X\n", byte);
                 for(u8 mask = 0x80; mask; mask >>= 1) { putchar(byte & mask ? '*' : '.'); }
+                putchar('\n');
             }
         }
     }
@@ -156,7 +157,7 @@ int main(int argc, char* argv[]) {
 end_program:
 
     if(input_file) fclose(input_file);
-    if(output_file) fclose(input_file);
+    if(output_file) fclose(output_file);
     free(fbuf);
     return 0;
 }
